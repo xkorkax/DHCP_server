@@ -4,8 +4,28 @@
 #include <arpa/inet.h>
 #include "dhcp.h"
 
-// Build and send DHCP OFFER in response to DISCOVER
-void send_dhcp_offer(int sockfd, struct dhcp_packet *discover) {
+// Send a DHCP reply packet via broadcast on port 68
+void send_dhcp_reply(int sockfd, struct dhcp_packet *reply) {
+    struct sockaddr_in dest;
+    memset(&dest, 0, sizeof(dest));
+    dest.sin_family = AF_INET;
+    dest.sin_port = htons(DHCP_CLIENT_PORT);
+    dest.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+
+    if (sendto(sockfd, reply, sizeof(*reply), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0) {
+        perror("sendto");
+    } else {
+        struct in_addr offered;
+        offered.s_addr = reply->yiaddr;
+        printf("Sent reply to %02x:%02x:%02x:%02x:%02x:%02x -> %s\n",
+               reply->chaddr[0], reply->chaddr[1], reply->chaddr[2],
+               reply->chaddr[3], reply->chaddr[4], reply->chaddr[5],
+               inet_ntoa(offered));
+    }
+}
+
+// Build DHCP OFFER packet in response to DISCOVER
+struct dhcp_packet build_dhcp_offer(struct dhcp_packet *discover) {
     struct dhcp_packet offer;
     memset(&offer, 0, sizeof(offer));
 
@@ -50,21 +70,5 @@ void send_dhcp_offer(int sockfd, struct dhcp_packet *discover) {
     // End option
     offer.options[opt_offset] = OPT_END;
 
-    // Send to broadcast on port 68
-    struct sockaddr_in dest;
-    memset(&dest, 0, sizeof(dest));
-    dest.sin_family = AF_INET;
-    dest.sin_port = htons(DHCP_CLIENT_PORT);
-    dest.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-
-    if (sendto(sockfd, &offer, sizeof(offer), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0) {
-        perror("sendto (offer)");
-    } else {
-        struct in_addr offered;
-        offered.s_addr = offer.yiaddr;
-        printf("Sent DHCP OFFER: %s to %02x:%02x:%02x:%02x:%02x:%02x\n",
-               inet_ntoa(offered),
-               offer.chaddr[0], offer.chaddr[1], offer.chaddr[2],
-               offer.chaddr[3], offer.chaddr[4], offer.chaddr[5]);
-    }
+    return offer;
 }

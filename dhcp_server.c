@@ -83,7 +83,8 @@ int main() {
                 printf("Received DHCP DISCOVER from %02x:%02x:%02x:%02x:%02x:%02x\n",
                        packet->chaddr[0], packet->chaddr[1], packet->chaddr[2],
                        packet->chaddr[3], packet->chaddr[4], packet->chaddr[5]);
-                send_dhcp_offer(sockfd, packet);
+                struct dhcp_packet offer = build_dhcp_offer(packet);
+                send_dhcp_reply(sockfd, &offer);
                 break;
             default:
                 printf("Unhandled message type: %d\n", msg_type);

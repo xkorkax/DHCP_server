@@ -65,8 +65,6 @@ struct dhcp_packet {
     uint8_t  options[DHCP_OPTIONS_LEN]; // DHCP options (variable length)
 } __attribute__((packed));
 
-// --- Function prototypes ---
-
 // dhcp_options.c
 int get_dhcp_option(struct dhcp_packet *packet, int opt_code, uint8_t *out, int out_len);
 int get_dhcp_msg_type(struct dhcp_packet *packet);
@@ -77,6 +75,7 @@ void init_ip_pool();
 uint32_t allocate_ip();
 
 // dhcp_handler.c
-void send_dhcp_offer(int sockfd, struct dhcp_packet *discover);
+void send_dhcp_reply(int sockfd, struct dhcp_packet *reply);
+struct dhcp_packet build_dhcp_offer(struct dhcp_packet *discover);
 
 #endif
