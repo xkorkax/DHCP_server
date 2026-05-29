@@ -35,6 +35,15 @@
 // Magic cookie
 #define DHCP_MAGIC_COOKIE 0x63825363
 
+// Server configuration
+#define SERVER_IP      "192.168.1.1"
+#define SUBNET_MASK    "255.255.255.0"
+#define ROUTER_IP      "192.168.1.1"
+#define DNS_IP         "8.8.8.8"
+#define LEASE_TIME     3600          // seconds (1 hour)
+#define IP_POOL_START  "192.168.1.100"
+#define IP_POOL_END    "192.168.1.200"
+
 // --- DHCP packet structure (fixed header: 236 bytes) ---
 
 struct dhcp_packet {
@@ -55,5 +64,19 @@ struct dhcp_packet {
     uint32_t magic_cookie; // Must be 0x63825363
     uint8_t  options[DHCP_OPTIONS_LEN]; // DHCP options (variable length)
 } __attribute__((packed));
+
+// --- Function prototypes ---
+
+// dhcp_options.c
+int get_dhcp_option(struct dhcp_packet *packet, int opt_code, uint8_t *out, int out_len);
+int get_dhcp_msg_type(struct dhcp_packet *packet);
+int add_option(uint8_t *options, int offset, uint8_t code, uint8_t len, void *data);
+
+// ip_pool.c
+void init_ip_pool();
+uint32_t allocate_ip();
+
+// dhcp_handler.c
+void send_dhcp_offer(int sockfd, struct dhcp_packet *discover);
 
 #endif

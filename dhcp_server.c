@@ -1,5 +1,5 @@
-// gcc dhcp_server.c -o dhcp_server
-// clang dhcp_server.c -o dhcp_server
+// gcc dhcp_server.c dhcp_options.c ip_pool.c dhcp_handler.c -o dhcp_server
+// clang dhcp_server.c dhcp_options.c ip_pool.c dhcp_handler.c -o dhcp_server
 // sudo ./dhcp_server
 
 #include <stdio.h>
@@ -9,43 +9,10 @@
 #include <arpa/inet.h>
 #include "dhcp.h"
 
-// Parse DHCP options and return the value of a given option code
-// Returns -1 if option not found
-int get_dhcp_option(struct dhcp_packet *packet, int opt_code, uint8_t *out, int out_len) {
-    int i = 0;
-    while (i < DHCP_OPTIONS_LEN) {
-        uint8_t code = packet->options[i];
-
-        if (code == OPT_END)
-            break;
-
-        if (code == 0) {    // Padding option — skip
-            i++;
-            continue;
-        }
-
-        uint8_t len = packet->options[i + 1];
-
-        if (code == opt_code) {
-            if (len <= out_len)
-                memcpy(out, &packet->options[i + 2], len);
-            return len;
-        }
-
-        i += 2 + len;  // skip to next option: code(1) + len(1) + data(len)
-    }
-    return -1;
-}
-
-// Get DHCP message type (option 53). Returns -1 if not found
-int get_dhcp_msg_type(struct dhcp_packet *packet) {
-    uint8_t msg_type;
-    if (get_dhcp_option(packet, OPT_MSG_TYPE, &msg_type, 1) > 0)
-        return msg_type;
-    return -1;
-}
-
 int main() {
+    // Initialize IP address pool
+    init_ip_pool();
+
     // 1. Create UDP socket
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
@@ -54,9 +21,10 @@ int main() {
     }
     printf("UDP socket created (fd=%d)\n", sockfd);
 
-    // 2. Allow port reuse
+    // 2. Allow port reuse and broadcast
     int opt = 1;
     setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &opt, sizeof(opt));
 
     // 3. Bind socket to port 67 on all interfaces
     struct sockaddr_in server_addr;
@@ -115,7 +83,7 @@ int main() {
                 printf("Received DHCP DISCOVER from %02x:%02x:%02x:%02x:%02x:%02x\n",
                        packet->chaddr[0], packet->chaddr[1], packet->chaddr[2],
                        packet->chaddr[3], packet->chaddr[4], packet->chaddr[5]);
-                // TODO: send DHCP OFFER
+                send_dhcp_offer(sockfd, packet);
                 break;
             default:
                 printf("Unhandled message type: %d\n", msg_type);
