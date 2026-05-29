@@ -1,14 +1,13 @@
 // gcc dhcp_server.c -o dhcp_server
 // clang dhcp_server.c -o dhcp_server
-// ./dhcp_server
+// sudo ./dhcp_server
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-
-#define DHCP_SERVER_PORT 67
+#include "dhcp.h"
 
 int main() {
     // 1. Create UDP socket
