@@ -3,8 +3,11 @@
 
 #include <stdint.h>
 
-#define DHCP_SERVER_PORT 67
-#define DHCP_CLIENT_PORT 68
+#define DHCP_SERVER_PORT  67
+#define DHCP_CLIENT_PORT  68
+#define DHCP_OPTIONS_LEN  312
+#define DHCP_HEADER_SIZE  236
+#define DHCP_MAGIC_COOKIE_SIZE 4
 
 // op field
 #define BOOTREQUEST 1   // package from client to server
@@ -35,7 +38,7 @@
 // --- DHCP packet structure (fixed header: 236 bytes) ---
 
 struct dhcp_packet {
-    uint8_t  op;          // 1 = REQUEST, 2 = REPLY
+    uint8_t  op;          // 1 = BOOTREQUEST, 2 = BOOTREPLY
     uint8_t  htype;       // Hardware type: 1 = Ethernet
     uint8_t  hlen;        // Hardware address length: 6 (MAC)
     uint8_t  hops;        // Hops (used by relay agents)
@@ -50,7 +53,7 @@ struct dhcp_packet {
     uint8_t  sname[64];   // Server host name
     uint8_t  file[128];   // Boot file name
     uint32_t magic_cookie; // Must be 0x63825363
-    uint8_t  options[312]; // DHCP options (variable length)
+    uint8_t  options[DHCP_OPTIONS_LEN]; // DHCP options (variable length)
 } __attribute__((packed));
 
 #endif
