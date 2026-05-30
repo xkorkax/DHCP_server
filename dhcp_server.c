@@ -41,11 +41,12 @@ int main() {
     printf("Listening on port %d...\n", DHCP_SERVER_PORT);
 
     // 4. Packet receive loop
-    char buffer[1024];
+    char buffer[ETH_MTU];
     struct sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
 
     while (1) {
+        // recvfrom automatically fills client IP and port (client_addr) and actual address size (client_len)
         int n = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)&client_addr, &client_len);
         if (n < 0) {
             perror("recvfrom");

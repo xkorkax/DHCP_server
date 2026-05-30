@@ -8,6 +8,7 @@
 #define DHCP_OPTIONS_LEN  312
 #define DHCP_HEADER_SIZE  236
 #define DHCP_MAGIC_COOKIE_SIZE 4
+#define ETH_MTU           1500
 
 // op field
 #define BOOTREQUEST 1   // package from client to server
