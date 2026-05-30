@@ -87,13 +87,26 @@ int main() {
                 struct dhcp_packet offer = build_dhcp_offer(packet);
                 send_dhcp_reply(sockfd, &offer);
                 break;
-            case DHCP_REQUEST:
+            case DHCP_REQUEST: {
                 printf("Received DHCP REQUEST from %02x:%02x:%02x:%02x:%02x:%02x\n",
                        packet->chaddr[0], packet->chaddr[1], packet->chaddr[2],
                        packet->chaddr[3], packet->chaddr[4], packet->chaddr[5]);
-                struct dhcp_packet ack = build_dhcp_ack(packet);
-                send_dhcp_reply(sockfd, &ack);
+
+                // Get requested IP
+                uint32_t req_ip;
+                if (get_dhcp_option(packet, OPT_REQUESTED_IP, (uint8_t *)&req_ip, 4) <= 0)
+                    req_ip = packet->ciaddr;
+
+                if (req_ip != 0 && is_lease_valid_for_client(packet->chaddr, req_ip)) {
+                    struct dhcp_packet ack = build_dhcp_ack(packet);
+                    send_dhcp_reply(sockfd, &ack);
+                } else {
+                    printf("NAK: invalid IP requested\n");
+                    struct dhcp_packet nak = build_dhcp_nak(packet);
+                    send_dhcp_reply(sockfd, &nak);
+                }
                 break;
+            }
             case DHCP_RELEASE:
                 printf("Received DHCP RELEASE from %02x:%02x:%02x:%02x:%02x:%02x\n",
                        packet->chaddr[0], packet->chaddr[1], packet->chaddr[2],

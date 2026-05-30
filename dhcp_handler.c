@@ -124,3 +124,31 @@ struct dhcp_packet build_dhcp_ack(struct dhcp_packet *request) {
 
     return ack;
 }
+
+// Build DHCP NAK packet in response to invalid REQUEST
+struct dhcp_packet build_dhcp_nak(struct dhcp_packet *request) {
+    struct dhcp_packet nak;
+    memset(&nak, 0, sizeof(nak));
+
+    nak.op = BOOTREPLY;
+    nak.htype = request->htype;
+    nak.hlen = request->hlen;
+    nak.xid = request->xid;
+    nak.flags = request->flags;
+    // yiaddr = 0 (no IP for you)
+    nak.siaddr = inet_addr(SERVER_IP);
+    memcpy(nak.chaddr, request->chaddr, 16);
+    nak.magic_cookie = htonl(DHCP_MAGIC_COOKIE);
+
+    int opt_offset = 0;
+
+    uint8_t msg_type = DHCP_NAK;
+    opt_offset = add_option(nak.options, opt_offset, OPT_MSG_TYPE, 1, &msg_type);
+
+    uint32_t server_id = inet_addr(SERVER_IP);
+    opt_offset = add_option(nak.options, opt_offset, OPT_SERVER_ID, 4, &server_id);
+
+    nak.options[opt_offset] = OPT_END;
+
+    return nak;
+}

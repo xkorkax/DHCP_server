@@ -74,6 +74,24 @@ void confirm_lease(uint8_t *chaddr, uint32_t ip) {
     }
 }
 
+// Check if a given IP belongs to this client (valid for ACK)
+int is_lease_valid_for_client(uint8_t *chaddr, uint32_t ip) {
+    for (int i = 0; i < MAX_LEASES; i++) {
+        if (leases[i].ip_addr == ip) {
+            // IP found — is it assigned to this client?
+            if (mac_equal(leases[i].chaddr, chaddr) && !is_lease_free(i))
+                return 1;
+            // IP is free (expired or never used) — also OK to assign
+            if (is_lease_free(i))
+                return 1;
+            // IP is taken by another client
+            return 0;
+        }
+    }
+    // IP not in our pool at all
+    return 0;
+}
+
 // Release a lease (called on DHCP RELEASE)
 void release_lease(uint8_t *chaddr) {
     for (int i = 0; i < MAX_LEASES; i++) {

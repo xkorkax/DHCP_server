@@ -85,10 +85,12 @@ uint32_t allocate_ip(uint8_t *chaddr);
 void confirm_lease(uint8_t *chaddr, uint32_t ip);
 void release_lease(uint8_t *chaddr);
 uint32_t find_existing_lease(uint8_t *chaddr);
+int is_lease_valid_for_client(uint8_t *chaddr, uint32_t ip);
 
 // dhcp_handler.c
 void send_dhcp_reply(int sockfd, struct dhcp_packet *reply);
 struct dhcp_packet build_dhcp_offer(struct dhcp_packet *discover);
 struct dhcp_packet build_dhcp_ack(struct dhcp_packet *request);
+struct dhcp_packet build_dhcp_nak(struct dhcp_packet *request);
 
 #endif
