@@ -87,6 +87,13 @@ int main() {
                 struct dhcp_packet offer = build_dhcp_offer(packet);
                 send_dhcp_reply(sockfd, &offer);
                 break;
+            case DHCP_REQUEST:
+                printf("Received DHCP REQUEST from %02x:%02x:%02x:%02x:%02x:%02x\n",
+                       packet->chaddr[0], packet->chaddr[1], packet->chaddr[2],
+                       packet->chaddr[3], packet->chaddr[4], packet->chaddr[5]);
+                struct dhcp_packet ack = build_dhcp_ack(packet);
+                send_dhcp_reply(sockfd, &ack);
+                break;
             default:
                 printf("Unhandled message type: %d\n", msg_type);
                 break;

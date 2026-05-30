@@ -72,3 +72,52 @@ struct dhcp_packet build_dhcp_offer(struct dhcp_packet *discover) {
 
     return offer;
 }
+
+// Build DHCP ACK packet in response to REQUEST
+struct dhcp_packet build_dhcp_ack(struct dhcp_packet *request) {
+    struct dhcp_packet ack;
+    memset(&ack, 0, sizeof(ack));
+
+    // Header fields
+    ack.op = BOOTREPLY;
+    ack.htype = request->htype;
+    ack.hlen = request->hlen;
+    ack.xid = request->xid;
+    ack.flags = request->flags;
+    ack.siaddr = inet_addr(SERVER_IP);
+    memcpy(ack.chaddr, request->chaddr, 16);
+    ack.magic_cookie = htonl(DHCP_MAGIC_COOKIE);
+
+    // Get requested IP from option 50
+    uint32_t requested_ip;
+    if (get_dhcp_option(request, OPT_REQUESTED_IP, (uint8_t *)&requested_ip, 4) > 0) {
+        ack.yiaddr = requested_ip;
+    } else {
+        ack.yiaddr = request->ciaddr;  // fallback: use client's current IP
+    }
+
+    // Build options
+    int opt_offset = 0;
+
+    uint8_t msg_type = DHCP_ACK;
+    opt_offset = add_option(ack.options, opt_offset, OPT_MSG_TYPE, 1, &msg_type);
+
+    uint32_t server_id = inet_addr(SERVER_IP);
+    opt_offset = add_option(ack.options, opt_offset, OPT_SERVER_ID, 4, &server_id);
+
+    uint32_t lease = htonl(LEASE_TIME);
+    opt_offset = add_option(ack.options, opt_offset, OPT_LEASE_TIME, 4, &lease);
+
+    uint32_t mask = inet_addr(SUBNET_MASK);
+    opt_offset = add_option(ack.options, opt_offset, OPT_SUBNET_MASK, 4, &mask);
+
+    uint32_t router = inet_addr(ROUTER_IP);
+    opt_offset = add_option(ack.options, opt_offset, OPT_ROUTER, 4, &router);
+
+    uint32_t dns = inet_addr(DNS_IP);
+    opt_offset = add_option(ack.options, opt_offset, OPT_DNS, 4, &dns);
+
+    ack.options[opt_offset] = OPT_END;
+
+    return ack;
+}
