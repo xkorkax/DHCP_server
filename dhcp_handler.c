@@ -35,7 +35,7 @@ struct dhcp_packet build_dhcp_offer(struct dhcp_packet *discover) {
     offer.hlen = discover->hlen;
     offer.xid = discover->xid;          // copy transaction ID
     offer.flags = discover->flags;
-    offer.yiaddr = allocate_ip();        // offered IP
+    offer.yiaddr = allocate_ip(discover->chaddr);  // offered IP
     offer.siaddr = inet_addr(SERVER_IP); // server IP
     memcpy(offer.chaddr, discover->chaddr, 16);  // copy client MAC
     offer.magic_cookie = htonl(DHCP_MAGIC_COOKIE);
@@ -95,6 +95,9 @@ struct dhcp_packet build_dhcp_ack(struct dhcp_packet *request) {
     } else {
         ack.yiaddr = request->ciaddr;  // fallback: use client's current IP
     }
+
+    // Confirm the lease in the table
+    confirm_lease(request->chaddr, ack.yiaddr);
 
     // Build options
     int opt_offset = 0;

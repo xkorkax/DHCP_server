@@ -2,6 +2,7 @@
 #define DHCP_H
 
 #include <stdint.h>
+#include <time.h>
 
 #define DHCP_SERVER_PORT  67
 #define DHCP_CLIENT_PORT  68
@@ -44,9 +45,9 @@
 #define LEASE_TIME     3600          // seconds (1 hour)
 #define IP_POOL_START  "192.168.1.100"
 #define IP_POOL_END    "192.168.1.200"
+#define MAX_LEASES     101           // pool size (200 - 100 + 1)
 
-// --- DHCP packet structure (fixed header: 236 bytes) ---
-
+// dhcp packet
 struct dhcp_packet {
     uint8_t  op;          // 1 = BOOTREQUEST, 2 = BOOTREPLY
     uint8_t  htype;       // Hardware type: 1 = Ethernet
@@ -66,14 +67,24 @@ struct dhcp_packet {
     uint8_t  options[DHCP_OPTIONS_LEN]; // DHCP options (variable length)
 } __attribute__((packed));
 
+// lease entry
+struct lease_entry {
+    uint8_t  chaddr[16];   // Client MAC address
+    uint32_t ip_addr;      // Assigned IP (network byte order)
+    time_t   lease_expiry; // Unix timestamp when lease expires (0 = free)
+};
+
 // dhcp_options.c
 int get_dhcp_option(struct dhcp_packet *packet, int opt_code, uint8_t *out, int out_len);
 int get_dhcp_msg_type(struct dhcp_packet *packet);
 int add_option(uint8_t *options, int offset, uint8_t code, uint8_t len, void *data);
 
 // ip_pool.c
-void init_ip_pool();
-uint32_t allocate_ip();
+void init_lease_table();
+uint32_t allocate_ip(uint8_t *chaddr);
+void confirm_lease(uint8_t *chaddr, uint32_t ip);
+void release_lease(uint8_t *chaddr);
+uint32_t find_existing_lease(uint8_t *chaddr);
 
 // dhcp_handler.c
 void send_dhcp_reply(int sockfd, struct dhcp_packet *reply);
