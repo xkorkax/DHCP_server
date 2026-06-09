@@ -4,23 +4,34 @@
 #include <arpa/inet.h>
 #include "dhcp.h"
 
-// Send a DHCP reply packet via broadcast on port 68
+// Send a DHCP reply packet (broadcast or unicast based on client flag)
 void send_dhcp_reply(int sockfd, struct dhcp_packet *reply) {
     struct sockaddr_in dest;
     memset(&dest, 0, sizeof(dest));
     dest.sin_family = AF_INET;
     dest.sin_port = htons(DHCP_CLIENT_PORT);
-    dest.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+
+    const char *send_type;
+
+    // Check if it's a NAK (yiaddr == 0) OR if the broadcast flag is set
+    if (reply->yiaddr == 0 || (reply->flags & htons(0x8000))) {
+        dest.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+        send_type = "broadcast";
+    } else {
+        dest.sin_addr.s_addr = reply->yiaddr;
+        send_type = "unicast";
+    }
 
     if (sendto(sockfd, reply, sizeof(*reply), 0, (struct sockaddr *)&dest, sizeof(dest)) < 0) {
         perror("sendto");
     } else {
         struct in_addr offered;
         offered.s_addr = reply->yiaddr;
-        printf("Sent reply to %02x:%02x:%02x:%02x:%02x:%02x -> %s\n",
+
+        printf("Sent reply to %02x:%02x:%02x:%02x:%02x:%02x -> %s (via %s)\n",
                reply->chaddr[0], reply->chaddr[1], reply->chaddr[2],
                reply->chaddr[3], reply->chaddr[4], reply->chaddr[5],
-               inet_ntoa(offered));
+               inet_ntoa(offered), send_type);
     }
 }
 
