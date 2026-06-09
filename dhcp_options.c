@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h> 
 #include "dhcp.h"
 
 // Parse DHCP options and return the value of a given option code
