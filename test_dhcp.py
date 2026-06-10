@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-"""Test script for DHCP server - simulates full DORA cycle, RELEASE, and NAK."""
-
 import socket
 import struct
 import time
@@ -71,7 +68,7 @@ def build_base_packet(set_broadcast_flag=False):
     packet[2] = 6  # hlen = 6 (MAC)
     struct.pack_into("!I", packet, 4, TRANSACTION_ID)
 
-    # Ustawianie flagi Broadcast (bit 0x8000 na offsecie 10)
+    # Setting the Broadcast flag (bit 0x8000 at offset 10)
     if set_broadcast_flag:
         packet[10] = 0x80
 
@@ -129,7 +126,7 @@ def build_release(client_ip, server_id):
     return bytes(packet)
 
 
-# --- Main Execution ---
+# --- main ---
 def run_tests():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -137,12 +134,12 @@ def run_tests():
     sock.bind(("0.0.0.0", 68))
     sock.settimeout(3)
 
-    print("==================================================")
-    print(" ROZPOCZYNAM TESTY SERWERA DHCP")
-    print("==================================================")
+    print("------------------------------------------------")
+    print("CLIENT START")
+    print("------------------------------------------------")
 
-    # 1. Send DISCOVER (z włączoną flagą broadcast)
-    send_packet(sock, build_discover(set_broadcast_flag=True), "DHCP DISCOVER (Flaga Broadcast=1)")
+    # 1. Send DISCOVER (broadcast flag up)
+    send_packet(sock, build_discover(set_broadcast_flag=True), "DHCP DISCOVER (Broadcast flag=1)")
 
     try:
         data, addr = sock.recvfrom(1024)
@@ -151,9 +148,9 @@ def run_tests():
 
         if offered_ip and server_id:
             # 2. Send REQUEST to confirm the offered IP
-            time.sleep(1)  # Small delay for realistic flow
+            time.sleep(1)
             send_packet(
-                sock, build_request(offered_ip, server_id, set_broadcast_flag=True), f"DHCP REQUEST (Prośba o {offered_ip})"
+                sock, build_request(offered_ip, server_id, set_broadcast_flag=True), f"DHCP REQUEST (Requesting {offered_ip})"
             )
 
             data, addr = sock.recvfrom(1024)
@@ -163,34 +160,34 @@ def run_tests():
             # 3. Send RELEASE to free up the IP pool
             time.sleep(1)
             send_packet(sock, build_release(offered_ip, server_id), "DHCP RELEASE")
-            print("\n--- Adres uwolniony pomyślnie! ---")
+            print("\n--- Address released successfully! ---")
 
-            # --- 4. TEST NEGATYWNY: Wymuszanie DHCP NAK ---
-            print("\n==================================================")
-            print(" TEST NEGATYWNY: Wymuszanie NAK")
-            print("==================================================")
+            # --- 4. NEGATIVE TEST: Forcing DHCP NAK ---
+            print("\n------------------------------------------------")
+            print(" NEGATIVE TEST: Forcing NAK")
+            print("------------------------------------------------")
             time.sleep(1)
 
-            # Klient zuchwale prosi o IP "10.0.0.99", którego nie ma w puli
-            # Ustawiamy set_broadcast_flag=False (unicast), żeby przetestować, czy Twój serwer bezpiecznie zmieni to na broadcast dla NAK!
+            # Client boldly requests IP "10.0.0.99", which is not in the pool
+            # Setting set_broadcast_flag=False (unicast) to test if your server safely changes it to broadcast for NAK!
             bad_request_pkt = build_request("10.0.0.99", server_id, set_broadcast_flag=False)
-            send_packet(sock, bad_request_pkt, "DHCP REQUEST (Nieprawidłowe IP: 10.0.0.99)")
+            send_packet(sock, bad_request_pkt, "DHCP REQUEST (Invalid IP: 10.0.0.99)")
 
             try:
                 data, addr = sock.recvfrom(1024)
                 print(f"--- Received response from {addr} ---")
                 parse_response(data)
-                print("\n--- Test negatywny zakończony sukcesem (Serwer poprawnie odmówił)! ---")
+                print("\n--- Negative test successful (Server correctly refused)! ---")
             except socket.timeout:
-                print("  Błąd: Brak odpowiedzi na zły REQUEST (Sprawdź logikę NAK w C)")
+                print("  Error: No response to bad REQUEST (Check NAK logic in C)")
 
     except socket.timeout:
-        print("  Błąd: Brak odpowiedzi (timeout) przy pierwszym zapytaniu. Czy serwer działa?")
+        print("  Error: No response (timeout) on first query. Is the server running?")
     finally:
         sock.close()
-        print("\n==================================================")
-        print(" TESTY ZAKOŃCZONE")
-        print("==================================================")
+        print("\n------------------------------------------------")
+        print(" TESTS COMPLETED")
+        print("------------------------------------------------")
 
 
 if __name__ == "__main__":

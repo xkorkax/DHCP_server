@@ -52,7 +52,7 @@ int main() {
             perror("recvfrom");
             continue;
         }
-        printf("Received %d bytes from %s:%d\n", n, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+        // printf("Received %d bytes from %s:%d\n", n, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
         // 5. Validate packet size
         if (n < (DHCP_HEADER_SIZE + DHCP_MAGIC_COOKIE_SIZE)) {

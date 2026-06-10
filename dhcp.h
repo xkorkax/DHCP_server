@@ -40,12 +40,12 @@
 // Server configuration
 #define SERVER_IP      "192.168.1.1"
 #define SUBNET_MASK    "255.255.255.0"
-#define ROUTER_IP      "192.168.1.1"    //brama?
+#define ROUTER_IP      "192.168.1.1"    // gateway
 #define DNS_IP         "8.8.8.8"
-#define LEASE_TIME     3600          // seconds (1 hour)
+#define LEASE_TIME     3600             // seconds (1 hour)
 #define IP_POOL_START  "192.168.1.100"
 #define IP_POOL_END    "192.168.1.200"
-#define MAX_LEASES     101           // pool size (200 - 100 + 1)
+#define MAX_LEASES     101              // pool size (200 - 100 + 1)
 
 // dhcp packet
 struct dhcp_packet {

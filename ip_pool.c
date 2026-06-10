@@ -45,12 +45,12 @@ uint32_t find_existing_lease(uint8_t *chaddr) {
 
 // Allocate an IP for a client. Returns IP in network byte order, or 0 if pool exhausted.
 uint32_t allocate_ip(uint8_t *chaddr) {
-    // First: check if client already has a lease
+    // check if client already has a lease
     uint32_t existing = find_existing_lease(chaddr);
     if (existing != 0)
         return existing;
 
-    // Second: find a free slot
+    // find a free slot
     for (int i = 0; i < MAX_LEASES; i++) {
         if (is_lease_free(i)) {
             memcpy(leases[i].chaddr, chaddr, 16);
