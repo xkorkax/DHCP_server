@@ -13,7 +13,6 @@ def send_packet(sock, data, description):
 
 
 def parse_response(data):
-    """Parse a DHCP response and return Offered IP and Server ID."""
     if len(data) < 240:
         print("  Error: Response too small")
         return None, None
@@ -61,7 +60,6 @@ def parse_response(data):
 
 
 def build_base_packet(set_broadcast_flag=False):
-    """Builds the common DHCP header."""
     packet = bytearray(548)
     packet[0] = 1  # op = BOOTREQUEST
     packet[1] = 1  # htype = Ethernet
@@ -84,7 +82,7 @@ def build_discover(set_broadcast_flag=False):
     return bytes(packet)
 
 
-def build_request(requested_ip, server_id, set_broadcast_flag=False):
+def build_request(requested_ip, server_id, set_broadcast_flag=True):
     packet = build_base_packet(set_broadcast_flag)
     offset = 240
 
@@ -143,7 +141,7 @@ def run_tests():
 
     try:
         data, addr = sock.recvfrom(1024)
-        print(f"--- Received response from {addr} ---")
+        print(f"--- Received response ---")
         offered_ip, server_id = parse_response(data)
 
         if offered_ip and server_id:
@@ -154,13 +152,13 @@ def run_tests():
             )
 
             data, addr = sock.recvfrom(1024)
-            print(f"--- Received response from {addr} ---")
+            print(f"--- Received response ---")
             parse_response(data)
 
             # 3. Send RELEASE to free up the IP pool
-            time.sleep(1)
-            send_packet(sock, build_release(offered_ip, server_id), "DHCP RELEASE")
-            print("\n--- Address released successfully! ---")
+            #time.sleep(1)
+            #send_packet(sock, build_release(offered_ip, server_id), "DHCP RELEASE")
+            #print("\n--- Address released successfully! ---")
 
             # --- 4. NEGATIVE TEST: Forcing DHCP NAK ---
             print("\n------------------------------------------------")
@@ -168,21 +166,20 @@ def run_tests():
             print("------------------------------------------------")
             time.sleep(1)
 
-            # Client boldly requests IP "10.0.0.99", which is not in the pool
-            # Setting set_broadcast_flag=False (unicast) to test if your server safely changes it to broadcast for NAK!
+            # Client requests IP "10.0.0.99"
             bad_request_pkt = build_request("10.0.0.99", server_id, set_broadcast_flag=False)
             send_packet(sock, bad_request_pkt, "DHCP REQUEST (Invalid IP: 10.0.0.99)")
 
             try:
                 data, addr = sock.recvfrom(1024)
-                print(f"--- Received response from {addr} ---")
+                print(f"--- Received response ---")
                 parse_response(data)
-                print("\n--- Negative test successful (Server correctly refused)! ---")
+                print("\n--- Negative test successful ---")
             except socket.timeout:
-                print("  Error: No response to bad REQUEST (Check NAK logic in C)")
+                print("  Error: No response to bad REQUEST")
 
     except socket.timeout:
-        print("  Error: No response (timeout) on first query. Is the server running?")
+        print("  Error: No response")
     finally:
         sock.close()
         print("\n------------------------------------------------")

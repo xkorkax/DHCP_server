@@ -33,7 +33,7 @@ static int mac_equal(uint8_t *a, uint8_t *b) {
     return memcmp(a, b, 6) == 0;
 }
 
-// Find existing lease for a client (by MAC). Returns IP or 0 if not found.
+// Find existing lease for a client (by MAC)
 uint32_t find_existing_lease(uint8_t *chaddr) {
     for (int i = 0; i < MAX_LEASES; i++) {
         if (mac_equal(leases[i].chaddr, chaddr) && !is_lease_free(i)) {
@@ -43,7 +43,7 @@ uint32_t find_existing_lease(uint8_t *chaddr) {
     return 0;
 }
 
-// Allocate an IP for a client. Returns IP in network byte order, or 0 if pool exhausted.
+// Allocate an IP for a client
 uint32_t allocate_ip(uint8_t *chaddr) {
     // check if client already has a lease
     uint32_t existing = find_existing_lease(chaddr);
@@ -64,7 +64,7 @@ uint32_t allocate_ip(uint8_t *chaddr) {
     return 0;
 }
 
-// Confirm a lease (called after ACK is sent)
+// Confirm a lease
 void confirm_lease(uint8_t *chaddr, uint32_t ip) {
     for (int i = 0; i < MAX_LEASES; i++) {
         if (mac_equal(leases[i].chaddr, chaddr) && leases[i].ip_addr == ip) {
@@ -78,10 +78,10 @@ void confirm_lease(uint8_t *chaddr, uint32_t ip) {
 int is_lease_valid_for_client(uint8_t *chaddr, uint32_t ip) {
     for (int i = 0; i < MAX_LEASES; i++) {
         if (leases[i].ip_addr == ip) {
-            // IP found — is it assigned to this client?
+            // IP found
             if (mac_equal(leases[i].chaddr, chaddr) && !is_lease_free(i))
                 return 1;
-            // IP is free (expired or never used) — also OK to assign
+            // IP is free (expired or never used)
             if (is_lease_free(i))
                 return 1;
             // IP is taken by another client
@@ -92,7 +92,7 @@ int is_lease_valid_for_client(uint8_t *chaddr, uint32_t ip) {
     return 0;
 }
 
-// Release a lease (called on DHCP RELEASE)
+// Release a lease
 void release_lease(uint8_t *chaddr) {
     for (int i = 0; i < MAX_LEASES; i++) {
         if (mac_equal(leases[i].chaddr, chaddr)) {

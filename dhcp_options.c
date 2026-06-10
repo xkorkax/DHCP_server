@@ -4,7 +4,6 @@
 #include "dhcp.h"
 
 // Parse DHCP options and return the value of a given option code
-// Returns -1 if option not found
 int get_dhcp_option(struct dhcp_packet *packet, int opt_code, uint8_t *out, int out_len) {
     int i = 0;
     while (i < DHCP_OPTIONS_LEN) {
@@ -29,7 +28,7 @@ int get_dhcp_option(struct dhcp_packet *packet, int opt_code, uint8_t *out, int 
     return -1;
 }
 
-// Get DHCP message type (option 53). Returns -1 if not found
+// Get DHCP message type (option 53)
 int get_dhcp_msg_type(struct dhcp_packet *packet) {
     uint8_t msg_type;
     if (get_dhcp_option(packet, OPT_MSG_TYPE, &msg_type, 1) > 0)
@@ -37,7 +36,7 @@ int get_dhcp_msg_type(struct dhcp_packet *packet) {
     return -1;
 }
 
-// Add a DHCP option to the options buffer. Returns new offset.
+// Add a DHCP option to the options buffer
 int add_option(uint8_t *options, int offset, uint8_t code, uint8_t len, void *data) {
 
     if (offset + 2 + len >= DHCP_OPTIONS_LEN) {

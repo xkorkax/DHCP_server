@@ -146,7 +146,7 @@ struct dhcp_packet build_dhcp_nak(struct dhcp_packet *request) {
     nak.hlen = request->hlen;
     nak.xid = request->xid;
     nak.flags = request->flags;
-    // yiaddr = 0 (no IP for you)
+    // yiaddr = 0
     nak.siaddr = inet_addr(SERVER_IP);
     memcpy(nak.chaddr, request->chaddr, 16);
     nak.magic_cookie = htonl(DHCP_MAGIC_COOKIE);
