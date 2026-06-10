@@ -35,7 +35,7 @@ void send_dhcp_reply(int sockfd, struct dhcp_packet *reply) {
     }
 }
 
-// Build DHCP OFFER packet in response to DISCOVER
+// Build DHCP OFFER
 struct dhcp_packet build_dhcp_offer(struct dhcp_packet *discover) {
     struct dhcp_packet offer;
     memset(&offer, 0, sizeof(offer));
@@ -84,7 +84,7 @@ struct dhcp_packet build_dhcp_offer(struct dhcp_packet *discover) {
     return offer;
 }
 
-// Build DHCP ACK packet in response to REQUEST
+// Build DHCP ACK
 struct dhcp_packet build_dhcp_ack(struct dhcp_packet *request) {
     struct dhcp_packet ack;
     memset(&ack, 0, sizeof(ack));
